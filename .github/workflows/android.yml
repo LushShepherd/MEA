@@ -10,6 +10,7 @@ on:
       - "LICENSE"
       - ".gitmodules"
       - "scripts/prepare_android.py"
+      - "scripts/android_version.py"
       - "tests/test_android_packaging.py"
       - ".github/workflows/android*.yml"
   pull_request:
@@ -20,6 +21,7 @@ on:
       - "LICENSE"
       - ".gitmodules"
       - "scripts/prepare_android.py"
+      - "scripts/android_version.py"
       - "tests/test_android_packaging.py"
       - ".github/workflows/android*.yml"
   workflow_dispatch:

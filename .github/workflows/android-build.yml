@@ -56,7 +56,7 @@ jobs:
     env:
       PI_PROFILE: ${{ github.workspace }}/Android/profile.yaml
       ASSEMBLE: ${{ inputs.assemble }}
-      VERSION: ${{ inputs.version || github.ref_name }}
+      VERSION: ${{ inputs.version }}
       ABIS: ${{ matrix.abis }}
       APK_LABEL: ${{ matrix.label }}
     steps:
@@ -107,6 +107,8 @@ jobs:
           python-version: "3.13"
       - name: Test Android packaging
         run: python -m unittest discover -s tests -p 'test_android_packaging.py' -v
+      - name: Resolve updater-compatible APK version
+        run: python scripts/android_version.py --version "$VERSION" --github-env
       - name: Stage Android resources and OCR models
         run: python scripts/prepare_android.py --version "$VERSION" --repository "$GITHUB_REPOSITORY"
       - name: Read pinned MaaFramework version

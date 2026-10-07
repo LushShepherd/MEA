@@ -5,6 +5,31 @@ import unittest
 from pathlib import Path
 
 from scripts.prepare_android import ROOT, android_interface, prepare, read_json
+from scripts.android_version import parse_version, resolve_version, version_from_describe
+
+
+class AndroidVersionTests(unittest.TestCase):
+    def test_untagged_commit_is_valid_prerelease(self):
+        self.assertEqual(version_from_describe("fb67c84", 123), "0.0.0-dev.123+gfb67c84")
+
+    def test_release_tags_and_post_release_builds(self):
+        cases = {
+            "v1.2.3-0-gabc123": "1.2.3",
+            "v1.2.3-4-gabc123": "1.2.4-dev.4+gabc123",
+            "v1.2.3-beta.1-0-gabc123": "1.2.3-beta.1",
+            "v1.2.3-beta.1-4-gabc123": "1.2.3-beta.1.dev.4+gabc123",
+        }
+        for describe, expected in cases.items():
+            with self.subTest(describe=describe):
+                actual = version_from_describe(describe, 123)
+                self.assertEqual(actual, expected)
+                self.assertIsNotNone(parse_version(actual))
+
+    def test_explicit_version_is_validated(self):
+        self.assertEqual(resolve_version("v1.2.3"), "1.2.3")
+        for invalid in ("main", "fb67c84", "1.2.3-dev.01", "1.2.3\ninjected=value"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                resolve_version(invalid)
 
 
 class AndroidPackagingTests(unittest.TestCase):

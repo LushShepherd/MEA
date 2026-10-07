@@ -55,6 +55,7 @@ sdk.dir=C:/path/to/Android/Sdk
 pi.profile=../profile.yaml
 build.debugAbi=arm64-v8a
 build.ndkVersion=29.0.13113456
+build.versionName=0.0.0-dev
 ```
 
 Then, from `Android/MaaFwApp`:
@@ -69,6 +70,13 @@ The APK appears under `app/build/outputs/apk/debug/`. For a universal release,
 also deploy `--abi x86_64`, set `build.releaseAbi=arm64-v8a,x86_64`, provide
 the shell's signing environment variables (`KEYSTORE_PATH`,
 `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`), and run `:app:assembleRelease`.
+
+Use a SemVer value for `build.versionName`; a bare commit hash cannot be parsed
+by the updater. To calculate a version from your checkout, run
+`python scripts/android_version.py` from the MEA root and use its output.
+GitHub Actions applies this version to both the APK and packaged interface.
+Without tags, builds use `0.0.0-dev.<commit-count>+g<commit-hash>`; a release
+tag such as `v1.2.3` produces `1.2.3`.
 
 Rerun `prepare_android.py` after changing MEA resources or translations.
 `Android/assets/` is generated and ignored by Git. The script copies both Android
