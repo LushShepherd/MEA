@@ -84,6 +84,17 @@ class AndroidPackagingTests(unittest.TestCase):
         prepare(self.root)
         self.assertFalse((output / "obsolete.json").exists())
 
+    def test_resource_paths_resolve_from_android_install_directory(self):
+        output = prepare(self.root)
+        interface = read_json(output / "interface.json")
+        self.assertEqual([resource["path"] for resource in interface["resource"]],
+                         [["resource/base"], ["resource/base", "resource/resource_en"]])
+        for resource in interface["resource"]:
+            for entry in resource["path"]:
+                self.assertNotIn("{PROJECT_DIR}", entry)
+                self.assertTrue((output / entry / "pipeline/tasks/test.json").is_file())
+        self.assertEqual(read_json(self.root / "assets/interface.json"), self.interface)
+
     def test_missing_ocr_fails_before_build(self):
         (self.root / "assets/MaaCommonAssets/OCR/ppocr_v6/medium/rec.onnx").unlink()
         with self.assertRaisesRegex(FileNotFoundError, "initialize submodules"):

@@ -83,6 +83,12 @@ Rerun `prepare_android.py` after changing MEA resources or translations.
 language packs and the same ppocr_v6 medium OCR models used by the desktop installer.
 It leaves the original desktop interface intact.
 
+The generated Android interface uses resource paths relative to its installed
+PI directory (for example, `resource/base`), because MaaFwApp does not expand
+the desktop `{PROJECT_DIR}` placeholder. When installing rebuilt resources,
+use a higher APK `versionCode`: MaaFwApp uses it to decide when to unpack the
+bundled resources again.
+
 ## On a device
 
 Install the APK, allow notifications and battery/background permissions, then

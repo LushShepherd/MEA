@@ -39,6 +39,14 @@ def android_interface(interface, version, repository):
         item for item in interface["resource"]
         if all("resource_pc" not in path.replace("\\", "/").split("/") for path in item["path"])
     ]
+    # MaaFwApp resolves paths relative to its installed PI directory and does
+    # not expand the desktop {PROJECT_DIR} placeholder. Use these same paths
+    # for copying resources and for the generated interface consumed at runtime.
+    for resource in interface["resource"]:
+        resource["path"] = [
+            path.replace("\\", "/").removeprefix("{PROJECT_DIR}/")
+            for path in resource["path"]
+        ]
     interface["task"] = [item for item in interface["task"] if item["entry"] != UNAVAILABLE_ENTRY]
     interface["version"] = version
     interface["github"] = f"https://github.com/{repository}"
@@ -82,8 +90,8 @@ def prepare(root=ROOT, version="v0.0.0-dev", repository="LushShepherd/MEA"):
     copied = set()
     for resource in interface["resource"]:
         for entry in resource["path"]:
-            relative = Path(entry.removeprefix("{PROJECT_DIR}/"))
-            if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "resource":
+            relative = Path(entry)
+            if relative.is_absolute() or ".." in relative.parts or not relative.parts or relative.parts[0] != "resource":
                 raise ValueError(f"Unsupported resource path: {entry}")
             if relative not in copied:
                 shutil.copytree(root / "assets" / relative, output / relative, dirs_exist_ok=True)
