@@ -27,6 +27,24 @@ uploads the desktop ZIPs and all three APKs to the same GitHub Release.
 The existing MirrorChyan workflow continues to upload desktop/resource packages;
 Android APK updates use this repository's GitHub Releases.
 
+## Release versions
+
+MEA release versions follow the upstream MaaGF2Exilium release number. The first
+test release on the upstream `v2.7.2` baseline is `v2.7.2-beta.1`. This baseline
+also includes the later activity-appearance and cooking-swipe resource fixes
+already present in MEA, plus MEA's Android packaging changes.
+
+Use `v<upstream-version>-beta.<number>` for test releases and increment the beta
+number for each new test release. Tags with a prerelease suffix are published as
+GitHub prereleases and are offered by the Android beta update channel. Stable
+releases use `v<upstream-version>`.
+
+Every new APK release must have a higher `versionCode` than the previous APK.
+The Android build currently derives it from the full MEA commit count; compare
+the new commit count with the previous release before tagging, especially after
+a rebase. Changing only the tag on the same commit does not increase it. Keep
+published tags unchanged and push only the intended MEA release tag.
+
 ## Local build
 
 Install JDK 25, Android SDK, NDK 29.0.13113456, CMake 3.22.1, and Python 3.13.
