@@ -39,6 +39,12 @@ number for each new test release. Tags with a prerelease suffix are published as
 GitHub prereleases and are offered by the Android beta update channel. Stable
 releases use `v<upstream-version>`.
 
+The stable `v2.7.2` release promotes the device-tested `v2.7.2-beta.1` functionality
+without changes to task resources or Android packaging. Its release documentation
+commit increases the APK `versionCode` from 654 to 655, allowing installation over
+the beta. Use the same signing key and select the stable update channel for future
+stable releases.
+
 Every new APK release must have a higher `versionCode` than the previous APK.
 The Android build currently derives it from the full MEA commit count; compare
 the new commit count with the previous release before tagging, especially after
