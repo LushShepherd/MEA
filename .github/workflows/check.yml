@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - ".github/workflows/check.yml"
+      - ".github/workflows/sync-upstream.yml"
       - "assets/**"
       - "**.py"
   pull_request:
@@ -13,11 +14,22 @@ on:
       - "**"
     paths:
       - ".github/workflows/check.yml"
+      - ".github/workflows/sync-upstream.yml"
       - "assets/**"
       - "**.py"
   workflow_dispatch:
 
 jobs:
+  upstream-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Test upstream sync and release recovery
+        run: python -m unittest discover -s tests -p 'test_sync_upstream.py' -v
+
   resource:
     runs-on: ubuntu-latest
     steps:

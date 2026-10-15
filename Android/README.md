@@ -27,6 +27,86 @@ uploads the desktop ZIPs and all three APKs to the same GitHub Release.
 The existing MirrorChyan workflow continues to upload desktop/resource packages;
 Android APK updates use this repository's GitHub Releases.
 
+## Daily upstream synchronization
+
+**Sync upstream and release MEA** checks `DarkLingYun/MaaGF2Exilium:main`
+daily at **09:00 America/Los_Angeles**, following daylight-saving time. GitHub
+may delay scheduled runs. The job runs on GitHub; your computer can be off.
+Only this MEA repository is synchronized. MaaFwApp and MaaFramework stay pinned
+to the versions in the existing release configuration.
+
+Publishing is disabled until repository variable `UPSTREAM_SYNC_ENABLED` is
+`true`. Set it under **Settings → Secrets and variables → Actions → Variables**
+only after reviewing a successful dry run.
+
+### Initial setup
+
+1. Create a fine-grained personal access token owned by `LushShepherd`, restricted
+   to **Only select repositories → MEA**. Grant repository permissions
+   **Contents: Read and write**, **Workflows: Read and write**, and
+   **Actions: Read-only**. Workflows permission is needed when upstream changes
+   workflow files. Set an expiry and renew the token before it expires.
+2. Save the token as repository Actions secret `UPSTREAM_SYNC_TOKEN`. Keep it out
+   of source files and logs. The built-in `GITHUB_TOKEN` cannot replace it for
+   pushing tags: those pushes do not trigger the existing release workflow.
+3. Configure the four Android signing secrets listed above. Use the same signing
+   key as the published MEA APKs.
+4. Check **Settings → Rules → Rulesets** and branch protection for `main` and
+   `v*` tags. The token's account must be allowed to make ordinary merge-commit
+   pushes and create tags. The sync never force-pushes or bypasses rules. Required
+   pull requests, linear history, signed commits, or checks that prevent these
+   pushes require a compatible repository policy before publishing can work.
+5. Open **Actions → Sync upstream and release MEA → Run workflow**, leave
+   **dry_run** selected, and inspect the summary. It performs the merge, Android
+   packaging tests, and resource validation in a temporary checkout. It does not
+   update branches, push tags, or start releases. Missing publishing credentials
+   are reported; configure them before enabling publishing.
+6. Set `UPSTREAM_SYNC_ENABLED=true`. To catch up immediately, run the workflow
+   again with **dry_run** cleared; otherwise wait for the daily schedule.
+
+The first publishing run considers upstream SemVer tags newer than `v2.7.2`,
+including `v2.7.3` and prereleases. Older tags are not backfilled. Existing MEA
+tags are preserved even when they differ from upstream. Upstream tags are fetched
+into a separate namespace so they cannot overwrite MEA's release tags.
+
+The job merges the current upstream `main`, so each new release includes that
+merged snapshot, which can contain commits after the upstream tag. It preserves
+MEA's Android additions and creates one release marker commit per new tag. This
+keeps Android `versionCode` increasing even when several versions have the same
+resources. The annotation records the upstream commit. Tags outside upstream
+`main` require manual investigation rather than releasing unrelated code.
+
+New versions are pushed in SemVer order, one tag at a time, together with `main`
+in an atomic push. Each tag triggers the existing desktop and signed APK release
+workflow. The sync waits for it to succeed before publishing the next tag. When
+there are only commits, it updates `main` without creating a release. Unchanged
+runs create no commits.
+
+### Failures and recovery
+
+- A merge conflict or validation failure stops the job before any push. The
+  summary lists conflicting files. Resolve and merge the upstream changes
+  manually, then rerun with **dry_run** selected before publishing.
+- If `main` changes concurrently or repository rules reject a push, the sync
+  stops without forcing an update. Inspect the summary and rerun against the
+  current branch after correcting the cause.
+- A failed or unfinished release blocks later versions. Follow the release-run
+  link in the summary, fix the underlying problem, and rerun the **existing
+  install workflow run**. Once it succeeds, rerun the sync. Published tags are
+  permanent: do not delete or move them to retry a build. The sync recognizes its
+  annotated tags and checks unfinished releases again after a crash or timeout.
+- An expired token or missing signing secret stops publishing. Replace
+  `UPSTREAM_SYNC_TOKEN` or restore the signing secret and rerun. To pause future
+  publishing, set `UPSTREAM_SYNC_ENABLED=false`; an already-running job continues.
+- GitHub disables scheduled workflows in public repositories after 60 days
+  without repository activity. Check the Actions page if daily runs stop and
+  re-enable the workflow when necessary. Configure GitHub Actions failure
+  notifications for the account responsible for this schedule.
+
+For a local read-only preview, install `maafw` and run
+`python scripts/sync_upstream.py --dry-run`. Publishing is intended to run through
+the guarded Actions workflow. Neither mode changes your working checkout.
+
 ## Release versions
 
 MEA release versions follow the upstream MaaGF2Exilium release number. The first

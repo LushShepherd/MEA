@@ -1,0 +1,52 @@
+name: Sync upstream and release MEA
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+      timezone: America/Los_Angeles
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Merge and validate without pushing branches or tags"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: mea-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: >-
+      github.repository == 'LushShepherd/MEA' &&
+      (github.event_name == 'workflow_dispatch' || vars.UPSTREAM_SYNC_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install resource validator
+        run: python -m pip install maafw
+      - name: Test sync behavior
+        run: python -m unittest discover -s tests -p 'test_sync_upstream.py' -v
+      - name: Sync upstream
+        env:
+          UPSTREAM_SYNC_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+          UPSTREAM_SYNC_ENABLED: ${{ vars.UPSTREAM_SYNC_ENABLED }}
+          GH_TOKEN: ${{ github.token }}
+          MEA_SIGNING_READY: ${{ secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' && secrets.KEY_ALIAS != '' && secrets.KEY_PASSWORD != '' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/sync_upstream.py --dry-run
+          else
+            python scripts/sync_upstream.py --publish
+          fi
